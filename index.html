@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ta">
+<head>
+<meta charset="UTF-8">
+<title>Final Vote Poll</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="stylesheet" href="style.css">
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+
+<h1 class="title">🗳️ FINAL VOTE POLL</h1>
+<h2 id="timer">⏳ Loading...</h2>
+
+<div class="grid">
+  <!-- 8 MEMBERS -->
+  <div class="card" onclick="vote(1)"><img src="img/1.jpg"><h3 id="n1" class="name"></h3><div class="progress"><span id="p1"></span></div></div>
+  <div class="card" onclick="vote(2)"><img src="img/2.jpg"><h3 id="n2" class="name"></h3><div class="progress"><span id="p2"></span></div></div>
+  <div class="card" onclick="vote(3)"><img src="img/3.jpg"><h3 id="n3" class="name"></h3><div class="progress"><span id="p3"></span></div></div>
+  <div class="card" onclick="vote(4)"><img src="img/4.jpg"><h3 id="n4" class="name"></h3><div class="progress"><span id="p4"></span></div></div>
+  <div class="card" onclick="vote(5)"><img src="img/5.jpg"><h3 id="n5" class="name"></h3><div class="progress"><span id="p5"></span></div></div>
+  <div class="card" onclick="vote(6)"><img src="img/6.jpg"><h3 id="n6" class="name"></h3><div class="progress"><span id="p6"></span></div></div>
+  <div class="card" onclick="vote(7)"><img src="img/7.jpg"><h3 id="n7" class="name"></h3><div class="progress"><span id="p7"></span></div></div>
+  <div class="card" onclick="vote(8)"><img src="img/8.jpg"><h3 id="n8" class="name"></h3><div class="progress"><span id="p8"></span></div></div>
+</div>
+
+<!-- WINNER DISPLAY -->
+<div id="winnerBox" class="winner hidden">
+  <h1>🏆 WINNER ANNOUNCED 🏆</h1>
+  <img id="winnerImg">
+  <h2 id="winnerText"></h2>
+  <div class="medal">🏅</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <h3>📊 Live Vote Status</h3>
+  <div id="footerResults"></div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

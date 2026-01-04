@@ -1,0 +1,124 @@
+body{
+  margin:0;
+  font-family:Poppins,sans-serif;
+  background:#111;
+  color:white;
+  text-align:center;
+}
+
+.title{background:#e63946;padding:12px;}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  padding:12px;
+}
+
+.card{
+  background:#222;
+  border-radius:15px;
+  overflow:hidden;
+  cursor:pointer;
+}
+
+.card img{
+  width:100%;
+  height:150px;
+  object-fit:cover;
+}
+
+.name{
+  margin:6px 0;
+  font-weight:600;
+  color:#ffd166;
+}
+
+.progress{
+  height:8px;
+  background:#333;
+  margin:8px;
+  border-radius:10px;
+}
+
+.progress span{
+  display:block;
+  height:100%;
+  width:0%;
+  background:#2a9d8f;
+  transition:.5s;
+}
+
+/* FOOTER */
+footer{
+  background:#0b0b0b;
+  padding:15px;
+  border-top:2px solid #e63946;
+}
+
+.footer-row{
+  background:#1c1c1c;
+  margin:8px 0;
+  padding:8px;
+  border-radius:10px;
+}
+
+.footer-name{
+  display:flex;
+  justify-content:space-between;
+  font-weight:600;
+}
+
+.footer-progress{
+  background:#333;
+  height:8px;
+  border-radius:10px;
+  margin:6px 0;
+  overflow:hidden;
+}
+
+.footer-progress span{
+  display:block;
+  height:100%;
+  background:linear-gradient(90deg,#2a9d8f,#52b788);
+}
+
+.footer-count{
+  font-size:12px;
+  color:#ccc;
+  text-align:right;
+}
+
+/* RANK COLORS */
+.rank-1{border:2px solid gold;}
+.rank-2{border:2px solid silver;}
+.rank-3{border:2px solid #cd7f32;}
+
+/* WINNER */
+.winner{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,0.95);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+}
+
+.winner img{
+  width:200px;
+  border-radius:20px;
+  border:5px solid gold;
+}
+
+.medal{
+  font-size:60px;
+  animation:spin 2s infinite linear;
+}
+
+@keyframes spin{
+  from{transform:rotate(0deg);}
+  to{transform:rotate(360deg);}
+}
+
+.hidden{display:none;}
