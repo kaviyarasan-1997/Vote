@@ -2,45 +2,261 @@
 <html lang="ta">
 <head>
 <meta charset="UTF-8">
-<title>Final Vote Poll</title>
+<title>Final Pro Vote Poll</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<link rel="stylesheet" href="style.css">
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+<style>
+  /* 🔹 STYLING */
+  body { margin: 0; font-family: 'Poppins', sans-serif; background: #111; color: white; text-align: center; }
+  .title { background: #e63946; padding: 12px; margin: 0; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+
+  /* 3-DOT MENU */
+  .menu-container { position: fixed; top: 10px; right: 15px; z-index: 1000; }
+  .dots-btn { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 28px; cursor: pointer; padding: 5px 15px; border-radius: 50%; }
+  .dropdown { display: none; position: absolute; right: 0; background: #222; min-width: 160px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1001; }
+  .dropdown a { color: white; padding: 12px; text-decoration: none; display: block; border-bottom: 1px solid #333; font-size: 14px; text-align: left; }
+  .dropdown a:hover { background: #e63946; }
+
+  /* GRID */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; margin-top: 10px; }
+  .card { background: #222; border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
+  .card img { width: 100%; height: 140px; object-fit: cover; }
+  .name { margin: 6px 0; font-weight: 600; color: #ffd166; font-size: 14px; }
+  .progress { height: 8px; background: #333; margin: 8px; border-radius: 10px; overflow: hidden; }
+  .progress span { display: block; height: 100%; width: 0%; background: #2a9d8f; transition: .5s; }
+
+  /* POPUPS */
+  .pop-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
+  .pop-box { background: #1c1c1c; padding: 25px; border-radius: 20px; width: 85%; max-width: 350px; text-align: center; border: 1px solid #444; }
+  .close-x { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #888; }
+  input { width: 100%; padding: 12px; margin: 8px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
+  .btn-action { background: #2a9d8f; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+  .btn-reset { background: #e63946; }
+
+  /* FOOTER RESULTS (OLD STYLE RESTORED) */
+  footer { background: #0b0b0b; padding: 15px; border-top: 2px solid #e63946; margin-top: 20px; }
+  .footer-row { background: #1c1c1c; margin: 10px 0; padding: 12px; border-radius: 12px; transition: 0.3s; }
+  .footer-name { display: flex; justify-content: space-between; font-weight: 600; font-size: 14px; margin-bottom: 5px; }
+  .footer-progress { background: #333; height: 8px; border-radius: 10px; overflow: hidden; margin-bottom: 5px; }
+  .footer-progress span { display: block; height: 100%; background: linear-gradient(90deg, #2a9d8f, #52b788); transition: 0.5s; }
+  .footer-count { font-size: 12px; color: #aaa; text-align: right; }
+  
+  /* RANK COLORS */
+  .rank-1 { border: 2px solid gold; }
+  .rank-2 { border: 2px solid silver; }
+  .rank-3 { border: 2px solid #cd7f32; }
+
+  /* WINNER POPUP */
+  .winner { position: fixed; inset: 0; background: rgba(0,0,0,0.98); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 3000; }
+  .winner img { width: 180px; height: 180px; border-radius: 50%; border: 5px solid gold; object-fit: cover; box-shadow: 0 0 20px gold; }
+  .medal { font-size: 50px; margin-bottom: 10px; animation: bounce 1s infinite alternate; }
+  @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-10px); } }
+  .hidden { display: none !important; }
+</style>
 </head>
 <body>
 
-<h1 class="title">🗳️ FINAL VOTE POLL</h1>
-<h2 id="timer">⏳ Loading...</h2>
-
-<div class="grid">
-  <!-- 8 MEMBERS -->
-  <div class="card" onclick="vote(1)"><img src="img/1.jpg"><h3 id="n1" class="name"></h3><div class="progress"><span id="p1"></span></div></div>
-  <div class="card" onclick="vote(2)"><img src="img/2.jpg"><h3 id="n2" class="name"></h3><div class="progress"><span id="p2"></span></div></div>
-  <div class="card" onclick="vote(3)"><img src="img/3.jpg"><h3 id="n3" class="name"></h3><div class="progress"><span id="p3"></span></div></div>
-  <div class="card" onclick="vote(4)"><img src="img/4.jpg"><h3 id="n4" class="name"></h3><div class="progress"><span id="p4"></span></div></div>
-  <div class="card" onclick="vote(5)"><img src="img/5.jpg"><h3 id="n5" class="name"></h3><div class="progress"><span id="p5"></span></div></div>
-  <div class="card" onclick="vote(6)"><img src="img/6.jpg"><h3 id="n6" class="name"></h3><div class="progress"><span id="p6"></span></div></div>
-  <div class="card" onclick="vote(7)"><img src="img/7.jpg"><h3 id="n7" class="name"></h3><div class="progress"><span id="p7"></span></div></div>
-  <div class="card" onclick="vote(8)"><img src="img/8.jpg"><h3 id="n8" class="name"></h3><div class="progress"><span id="p8"></span></div></div>
+<div class="menu-container">
+  <button class="dots-btn" onclick="toggleMenu()">⋮</button>
+  <div id="dropdownMenu" class="dropdown">
+    <a href="javascript:void(0)" onclick="openPop('aboutPop')">ℹ️ Info</a>
+    <a href="javascript:void(0)" onclick="openPop('loginPop')">🔑 Admin</a>
+    <a href="javascript:void(0)" onclick="openPop('contactPop')">📞 Support</a>
+  </div>
 </div>
 
-<!-- WINNER DISPLAY -->
+<h1 class="title">🗳️ VOTE POLL SYSTEM</h1>
+<h2 id="timer">⏳ Syncing...</h2>
+
+<div class="grid" id="gridContainer">
+  <script>
+    for(let i=1; i<=8; i++) {
+      document.write(`
+        <div class="card" onclick="vote(${i})">
+          <img src="img/${i}.jpg" id="img${i}">
+          <h3 id="n${i}" class="name"></h3>
+          <div class="progress"><span id="p${i}"></span></div>
+        </div>
+      `);
+    }
+  </script>
+</div>
+
+<div id="loginPop" class="pop-overlay">
+  <div class="pop-box">
+    <span class="close-x" onclick="closePop('loginPop')">&times;</span>
+    <h3>Admin Login</h3>
+    <input type="text" id="adminUser" placeholder="Username">
+    <input type="password" id="adminPass" placeholder="Password">
+    <button class="btn-action" onclick="checkAdmin()">Login</button>
+  </div>
+</div>
+
+<div id="settingsPop" class="pop-overlay">
+  <div class="pop-box">
+    <span class="close-x" onclick="closePop('settingsPop')">&times;</span>
+    <h3>Dashboard</h3>
+    <label>Timer (Minutes):</label>
+    <input type="number" id="setMins" value="120">
+    <button class="btn-action btn-reset" onclick="resetAll()">🔄 FULL RESET POLL</button>
+    <hr>
+    <p>Edit Candidate Info:</p>
+    <select id="editId" style="width:100%; padding:10px; background:#222; color:white; border-radius:8px;">
+      <script>for(let i=1;i<=8;i++) document.write(`<option value="${i}">Member ${i}</option>`);</script>
+    </select>
+    <input type="text" id="newName" placeholder="New Name">
+    <button class="btn-action" onclick="applySettings()">Update</button>
+  </div>
+</div>
+
+<div id="aboutPop" class="pop-overlay"><div class="pop-box"><span class="close-x" onclick="closePop('aboutPop')">&times;</span><h3>Info</h3><p>Oru device-ku oru vote mattum thaan.</p></div></div>
+<div id="contactPop" class="pop-overlay"><div class="pop-box"><span class="close-x" onclick="closePop('contactPop')">&times;</span><h3>Contact</h3><p>admin@poll.com</p></div></div>
+
 <div id="winnerBox" class="winner hidden">
-  <h1>🏆 WINNER ANNOUNCED 🏆</h1>
-  <img id="winnerImg">
-  <h2 id="winnerText"></h2>
-  <div class="medal">🏅</div>
+  <div class="medal">🏆</div>
+  <img id="winnerImg" src="">
+  <h2 id="winnerText" style="color: gold; margin-top: 15px;"></h2>
+  <button class="btn-action" style="width:auto; padding:10px 40px" onclick="closeWinner()">Back to Results</button>
 </div>
 
-<!-- FOOTER -->
-<footer>
-  <h3>📊 Live Vote Status</h3>
-  <div id="footerResults"></div>
-</footer>
+<footer><h3>📊 Live Rankings</h3><div id="footerResults"></div></footer>
 
-<script src="script.js"></script>
+<script>
+/* 🔹 FIREBASE */
+const firebaseConfig = {
+  apiKey: "AIzaSyBLyf_dz6xPC9wdthZSVtpatkc8JgFhE4Q",
+  authDomain: "chatbox-chats.firebaseapp.com",
+  databaseURL: "https://chatbox-chats-default-rtdb.firebaseio.com",
+  projectId: "chatbox-chats",
+  storageBucket: "chatbox-chats.appspot.com",
+  messagingSenderId: "10200860576",
+  appId: "1:10200860576:android:262315d86f6d1732ddc6c5"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let names = { 1:"A.R.Rahman", 2:"Anirudh Ravichander", 3:"Yuvan Shankar Raja", 4:"J. Harris Jayaraj", 5:"Vijay Anton", 6:"Aadhi", 7:"D.imman", 8:"G.V.prakash" };
+for(let i=1;i<=8;i++){ document.getElementById("n"+i).innerText = names[i]; }
+
+/* 🔹 RESET TOKEN SYNC */
+db.ref("settings/resetToken").on("value", snap => {
+  if(localStorage.getItem("resetToken") !== snap.val()) {
+    localStorage.removeItem("voted");
+    localStorage.setItem("resetToken", snap.val());
+  }
+});
+
+/* 🔹 TIMER & WINNER LOGIC */
+const timeRef = db.ref("settings/endTime");
+let winnerShown = false;
+
+setInterval(() => {
+  timeRef.on("value", snap => {
+    const diff = snap.val() - Date.now();
+    if(diff <= 0){
+      document.getElementById("timer").innerText = "⏰ Voting Closed";
+      if(!winnerShown) { showWinner(); winnerShown = true; }
+    } else {
+      winnerShown = false;
+      const h = Math.floor(diff/3600000);
+      const m = Math.floor((diff%3600000)/60000);
+      const s = Math.floor((diff%60000)/1000);
+      document.getElementById("timer").innerText = `⏳ ${h}h ${m}m ${s}s`;
+    }
+  });
+}, 1000);
+
+function showWinner(){
+  db.ref("votes").once("value").then(snap => {
+    const data = snap.val() || {};
+    let winnerId = 1, maxVotes = -1;
+    for(let i=1; i<=8; i++) {
+      let v = data["option" + i] || 0;
+      if(v > maxVotes) { maxVotes = v; winnerId = i; }
+    }
+    document.getElementById("winnerImg").src = `img/${winnerId}.jpg`;
+    document.getElementById("winnerText").innerText = `${names[winnerId]} Wins! 🥇`;
+    document.getElementById("winnerBox").classList.remove("hidden");
+  });
+}
+function closeWinner() { document.getElementById("winnerBox").classList.add("hidden"); }
+
+/* 🔹 ADMIN */
+function toggleMenu() { document.getElementById("dropdownMenu").style.display = (document.getElementById("dropdownMenu").style.display === "block") ? "none" : "block"; }
+function openPop(id) { document.getElementById(id).style.display = "flex"; }
+function closePop(id) { document.getElementById(id).style.display = "none"; }
+
+function checkAdmin() {
+  const u = document.getElementById("adminUser").value;
+  const p = document.getElementById("adminPass").value;
+  if(u === "admin" && p === "1234") { closePop('loginPop'); openPop('settingsPop'); } else { alert("Error!"); }
+}
+
+function resetAll() {
+  const m = document.getElementById("setMins").value;
+  const token = Date.now().toString();
+  db.ref("settings").update({ endTime: Date.now() + (m*60*1000), resetToken: token });
+  db.ref("votes").remove();
+  alert("Poll Reset Success!");
+  location.reload();
+}
+
+function applySettings() {
+  const id = document.getElementById("editId").value;
+  const val = document.getElementById("newName").value;
+  if(val) { names[id] = val; document.getElementById("n"+id).innerText = val; alert("Updated!"); }
+}
+
+/* 🔹 VOTING & RESULTS */
+function vote(n){
+  timeRef.once("value").then(snap => {
+    if(Date.now() > snap.val()){ alert("Closed!"); return; }
+    if(localStorage.getItem("voted")){ alert("Already Voted!"); return; }
+    db.ref("votes/option"+n).transaction(v => (v||0)+1);
+    localStorage.setItem("voted","yes");
+    alert("Vote Counted!");
+  });
+}
+
+db.ref("votes").on("value", snap => {
+  const data = snap.val() || {};
+  let total = 0, arr = [];
+  for(let i=1; i<=8; i++) {
+    let v = data["option"+i] || 0;
+    total += v;
+    arr.push({id:i, name:names[i], votes:v});
+  }
+  arr.sort((a,b) => b.votes - a.votes);
+  
+  let html = "";
+  arr.forEach((o, i) => {
+    let p = total ? ((o.votes/total)*100).toFixed(1) : 0;
+    let rank = i==0?'rank-1':i==1?'rank-2':i==2?'rank-3':'';
+    
+    // Main grid progress sync
+    document.getElementById("p"+o.id).style.width = p + "%";
+    
+    // Footer row render
+    html += `
+      <div class="footer-row ${rank}">
+        <div class="footer-name">
+          <span>${i+1}. ${o.name}</span>
+          <span>${p}%</span>
+        </div>
+        <div class="footer-progress">
+          <span style="width:${p}%"></span>
+        </div>
+        <div class="footer-count">🗳️ ${o.votes} Votes</div>
+      </div>
+    `;
+  });
+  document.getElementById("footerResults").innerHTML = html;
+});
+
+window.onclick = function(e) { if(!e.target.matches('.dots-btn')) document.getElementById("dropdownMenu").style.display = "none"; }
+</script>
 </body>
 </html>
