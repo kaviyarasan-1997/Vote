@@ -22,7 +22,8 @@
 
   /* GRID */
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; margin-top: 10px; }
-  .card { background: #222; border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #333; }
+  .card { background: #222; border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
+  .card:active { transform: scale(0.95); }
   .card img { width: 100%; height: 140px; object-fit: cover; background: #333; }
   .name { margin: 6px 0; font-weight: 600; color: #ffd166; font-size: 14px; }
   .progress { height: 8px; background: #333; margin: 8px; border-radius: 10px; overflow: hidden; }
@@ -33,7 +34,7 @@
   .pop-box { background: #1c1c1c; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; border: 1px solid #444; }
   .close-x { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #888; }
   
-  input, select { width: 100%; padding: 10px; margin: 8px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; }
+  input, select { width: 100%; padding: 10px; margin: 8px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
   .btn-action { background: #2a9d8f; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
   .btn-reset { background: #e63946; margin-bottom: 20px; }
   .loading-text { font-size: 12px; color: gold; display: none; }
@@ -44,8 +45,6 @@
   .footer-name { display: flex; justify-content: space-between; font-weight: 600; }
   .footer-progress { background: #333; height: 8px; border-radius: 10px; overflow: hidden; margin: 5px 0; }
   .footer-progress span { display: block; height: 100%; background: #2a9d8f; }
-
-  .hidden { display: none !important; }
 </style>
 </head>
 <body>
@@ -113,10 +112,10 @@
 
     <div style="text-align: left; background:#2a2a2a; padding:10px; border-radius:10px; margin-top:10px;">
       <h4 style="margin:0 0 10px 0; color:#e63946;">2. Update Member</h4>
-      <select id="editId" onchange="loadCurrentData()">
+      <select id="editId">
         <script>for(let i=1;i<=8;i++) document.write(`<option value="${i}">Member ${i}</option>`);</script>
       </select>
-      <input type="text" id="editName" placeholder="Name">
+      <input type="text" id="editName" placeholder="New Name">
       <label style="font-size:12px;">Upload Image:</label>
       <input type="file" id="editImgFile" accept="image/*">
       <p id="uploadStatus" class="loading-text">Uploading Image... Please Wait.</p>
@@ -144,95 +143,169 @@ const storage = firebase.storage();
 
 let localNames = {};
 
-/* 🔹 DATA SYNC */
+/* 🔹 DATA SYNC - Updates names and images */
 db.ref("pollData").on("value", snap => {
   const data = snap.val() || {};
   for(let i=1; i<=8; i++) {
-    const m = data["m"+i] || { name: "Unknown", img: "" };
+    const m = data["m"+i] || { name: "Empty", img: "" };
     document.getElementById("n"+i).innerText = m.name;
-    document.getElementById("img"+i).src = m.img || "";
+    document.getElementById("img"+i).src = m.img || "https://via.placeholder.com/150";
     localNames[i] = m.name;
   }
 });
 
-/* 🔹 TIMER */
-const timeRef = db.ref("settings/endTime");
+/* 🔹 TIMER LOGIC */
 setInterval(() => {
-  timeRef.on("value", snap => {
+  db.ref("settings/endTime").once("value", snap => {
     const end = snap.val();
-    if(!end) { document.getElementById("timer").innerText = "⏳ Waiting for Start"; return; }
+    if(!end || end == 0) { 
+      document.getElementById("timer").innerText = "⏳ Waiting for Start"; 
+      return; 
+    }
     const diff = end - Date.now();
-    if(diff <= 0) { document.getElementById("timer").innerText = "⏰ Voting Closed"; }
-    else {
-      const d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000);
+    if(diff <= 0) { 
+      document.getElementById("timer").innerText = "⏰ Voting Closed"; 
+    } else {
+      const d = Math.floor(diff/(1000*60*60*24)), 
+            h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), 
+            m = Math.floor((diff%(1000*60))/(1000*60)), 
+            s = Math.floor((diff%(1000*60))/1000);
       document.getElementById("timer").innerText = `⏳ ${d}d ${h}h ${m}m ${s}s`;
     }
   });
 }, 1000);
 
-/* 🔹 ADMIN ACTIONS */
+/* 🔹 ADMIN LOGIN */
 function checkAdmin() {
   if(document.getElementById("adminUser").value==="admin" && document.getElementById("adminPass").value==="1234") {
     closePop('loginPop'); openPop('settingsPop');
   } else { alert("Access Denied"); }
 }
 
+/* 🔹 PUSH UPDATES (Timer & Member Data) */
 async function pushUpdates() {
   const id = document.getElementById("editId").value;
   const name = document.getElementById("editName").value;
   const file = document.getElementById("editImgFile").files[0];
   const dateTime = document.getElementById("adminDateTime").value;
 
-  if(dateTime) db.ref("settings/endTime").set(new Date(dateTime).getTime());
+  // 1. Update Timer
+  if(dateTime) {
+    db.ref("settings").update({ endTime: new Date(dateTime).getTime() });
+  }
 
-  if(name) db.ref("pollData/m"+id).update({ name: name });
+  // 2. Update Name
+  if(name) {
+    db.ref("pollData/m"+id).update({ name: name });
+  }
 
+  // 3. Update Image
   if(file) {
     document.getElementById("uploadStatus").style.display = "block";
-    const ref = storage.ref(`images/member${id}`);
-    await ref.put(file);
-    const url = await ref.getDownloadURL();
-    db.ref("pollData/m"+id).update({ img: url });
+    try {
+      const ref = storage.ref(`images/member${id}_${Date.now()}`);
+      await ref.put(file);
+      const url = await ref.getDownloadURL();
+      db.ref("pollData/m"+id).update({ img: url });
+    } catch(e) { alert("Upload Failed: " + e.message); }
     document.getElementById("uploadStatus").style.display = "none";
   }
-  alert("Poll Updated Successfully!");
+  alert("Settings Saved!");
 }
 
+/* 🔹 FULL RESET (The key fix for your issue) */
 function fullReset() {
-  if(!confirm("Reset All?")) return;
+  if(!confirm("Are you sure? This clears all votes and lets everyone vote again.")) return;
+  
+  // Clear the vote counts
   db.ref("votes").remove();
-  db.ref("settings").update({ endTime: 0, resetToken: Date.now() });
-  alert("Votes Cleared!");
+  
+  // Set a new resetToken (Session ID) and stop the timer
+  db.ref("settings").update({ 
+    endTime: 0, 
+    resetToken: Date.now() 
+  });
+  
+  alert("System Fully Reset! You can now start a new poll.");
 }
 
-/* 🔹 VOTING & RESULTS (Same as previous) */
+/* 🔹 VOTING LOGIC with Reset Token Check */
 function vote(n) {
-  timeRef.once("value").then(snap => {
-    if(!snap.val() || Date.now() > snap.val()) { alert("Poll Closed"); return; }
-    if(localStorage.getItem("voted")) { alert("Already Voted"); return; }
+  db.ref("settings").once("value").then(snap => {
+    const settings = snap.val() || {};
+    const endTime = settings.endTime;
+    const serverResetToken = settings.resetToken || 0;
+    const localResetToken = localStorage.getItem("myResetToken") || 0;
+
+    // 1. Check if Poll is running
+    if(!endTime || Date.now() > endTime) { 
+      alert("Voting is currently closed."); 
+      return; 
+    }
+
+    // 2. Check if user already voted IN THIS SESSION
+    if(localStorage.getItem("voted") === "yes" && localResetToken == serverResetToken) { 
+      alert("You have already voted in this poll!"); 
+      return; 
+    }
+
+    // 3. Record Vote
     db.ref("votes/option"+n).transaction(v => (v||0)+1);
+    
+    // 4. Save session info to browser
     localStorage.setItem("voted", "yes");
-    alert("Voted!");
+    localStorage.setItem("myResetToken", serverResetToken);
+    
+    alert("Vote Registered for " + localNames[n] + "!");
   });
 }
 
+/* 🔹 LIVE RESULTS SYNC */
 db.ref("votes").on("value", snap => {
   const data = snap.val() || {};
   let total = 0, arr = [];
-  for(let i=1; i<=8; i++) { let v = data["option"+i] || 0; total += v; arr.push({id:i, votes:v}); }
+  
+  for(let i=1; i<=8; i++) { 
+    let v = data["option"+i] || 0; 
+    total += v; 
+    arr.push({id:i, votes:v}); 
+  }
+
+  // Sort by highest votes
   arr.sort((a,b) => b.votes - a.votes);
+  
   let html = "";
   arr.forEach((o, i) => {
     let p = total ? ((o.votes/total)*100).toFixed(1) : 0;
-    document.getElementById("p"+o.id).style.width = p + "%";
-    html += `<div class="footer-row"><b>${i+1}. ${localNames[o.id]}</b> (${p}%)<div class="footer-progress"><span style="width:${p}%"></span></div></div>`;
+    // Update main grid progress bars
+    if(document.getElementById("p"+o.id)) document.getElementById("p"+o.id).style.width = p + "%";
+    // Build footer ranking list
+    html += `
+      <div class="footer-row">
+        <div class="footer-name">
+          <span>${i+1}. ${localNames[o.id] || "Unknown"}</span>
+          <span>${p}% (${o.votes})</span>
+        </div>
+        <div class="footer-progress"><span style="width:${p}%"></span></div>
+      </div>`;
   });
   document.getElementById("footerResults").innerHTML = html;
 });
 
+/* 🔹 UI HELPERS */
 function openPop(id) { document.getElementById(id).style.display = "flex"; }
 function closePop(id) { document.getElementById(id).style.display = "none"; }
-function toggleMenu() { const m = document.getElementById("dropdownMenu"); m.style.display = (m.style.display==="block")?"none":"block"; }
+function toggleMenu() { 
+  const m = document.getElementById("dropdownMenu"); 
+  m.style.display = (m.style.display==="block") ? "none" : "block"; 
+}
+
+// Close menu if clicked outside
+window.onclick = function(event) {
+  if (!event.target.matches('.dots-btn')) {
+    document.getElementById("dropdownMenu").style.display = "none";
+  }
+}
 </script>
 </body>
 </html>
