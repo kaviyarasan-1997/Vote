@@ -2,7 +2,7 @@
 <html lang="ta">
 <head>
 <meta charset="UTF-8">
-<title>Pro Vote Poll - Upload Edition</title>
+<title>Pro Vote Poll - Winner Edition</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
@@ -13,7 +13,7 @@
   body { margin: 0; font-family: 'Poppins', sans-serif; background: #111; color: white; text-align: center; }
   .title { background: #e63946; padding: 12px; margin: 0; font-size: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
 
-  /* 3-DOT MENU */
+  /* MENU */
   .menu-container { position: fixed; top: 10px; right: 15px; z-index: 1000; }
   .dots-btn { background: rgba(255,255,255,0.1); border: none; color: white; font-size: 28px; cursor: pointer; padding: 5px 15px; border-radius: 50%; }
   .dropdown { display: none; position: absolute; right: 0; background: #222; min-width: 160px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); overflow: hidden; z-index: 1001; }
@@ -22,7 +22,7 @@
 
   /* GRID */
   .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding: 12px; margin-top: 10px; }
-  .card { background: #222; border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; }
+  .card { background: #222; border-radius: 15px; overflow: hidden; cursor: pointer; border: 1px solid #333; transition: 0.3s; position: relative;}
   .card:active { transform: scale(0.95); }
   .card img { width: 100%; height: 140px; object-fit: cover; background: #333; }
   .name { margin: 6px 0; font-weight: 600; color: #ffd166; font-size: 14px; }
@@ -31,18 +31,21 @@
 
   /* POPUPS */
   .pop-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 2000; align-items: center; justify-content: center; backdrop-filter: blur(5px); }
-  .pop-box { background: #1c1c1c; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; border: 1px solid #444; }
+  .pop-box { background: #1c1c1c; padding: 20px; border-radius: 20px; width: 90%; max-width: 400px; max-height: 85vh; overflow-y: auto; border: 1px solid #444; position: relative; }
   .close-x { position: absolute; top: 10px; right: 15px; font-size: 28px; cursor: pointer; color: #888; }
   
   input, select { width: 100%; padding: 10px; margin: 8px 0; background: #222; border: 1px solid #444; border-radius: 8px; color: white; box-sizing: border-box; }
   .btn-action { background: #2a9d8f; color: white; border: none; padding: 12px; width: 100%; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 10px; }
   .btn-reset { background: #e63946; margin-bottom: 20px; }
-  .loading-text { font-size: 12px; color: gold; display: none; }
+  
+  /* WINNER SPECIFIC */
+  #winnerImg { width: 120px; height: 120px; border-radius: 50%; border: 4px solid gold; object-fit: cover; margin-top: 10px; }
+  .winner-crown { font-size: 40px; margin-bottom: 0; }
+  .winner-name { color: gold; font-size: 24px; margin: 10px 0; }
 
   /* FOOTER */
   footer { background: #0b0b0b; padding: 15px; border-top: 2px solid #e63946; margin-top: 20px; }
   .footer-row { background: #1c1c1c; margin: 10px 0; padding: 12px; border-radius: 12px; text-align: left; }
-  .footer-name { display: flex; justify-content: space-between; font-weight: 600; }
   .footer-progress { background: #333; height: 8px; border-radius: 10px; overflow: hidden; margin: 5px 0; }
   .footer-progress span { display: block; height: 100%; background: #2a9d8f; }
 </style>
@@ -75,17 +78,30 @@
   </script>
 </div>
 
-<div id="infoPop" class="pop-overlay">
+<div id="winnerPop" class="pop-overlay">
   <div class="pop-box">
-    <span class="close-x" onclick="closePop('infoPop')">&times;</span>
-    <h3>ℹ️ Voting Information</h3>
-    <ul style="text-align: left; font-size: 14px; line-height: 1.6;">
-      <li>Oru device moolama oru murai mattumae vote seiya mudiyum.</li>
-      <li>Admin timer mudindhavudan winner announcement automatic-ah varum.</li>
-      <li>Live results keelae ulla ranking section-il paarkalam.</li>
-      <li>Reset seiyappattal thirumba vote podalam.</li>
-    </ul>
-    <button class="btn-action" onclick="closePop('infoPop')">Got it!</button>
+    <span class="close-x" onclick="closePop('winnerPop')">&times;</span>
+    <p class="winner-crown">👑</p>
+    <h2 style="margin:0">WINNER</h2>
+    <img id="winnerImg" src="" alt="Winner">
+    <h3 id="winnerNameDisplay" class="winner-name">Name</h3>
+    <p id="winnerVotesDisplay" style="color:#aaa;">0 Votes Received</p>
+    <button class="btn-action" onclick="closePop('winnerPop')">Close</button>
+  </div>
+</div>
+
+<div id="settingsPop" class="pop-overlay">
+  <div class="pop-box">
+    <span class="close-x" onclick="closePop('settingsPop')">&times;</span>
+    <h3>Admin Dashboard</h3>
+    <button class="btn-action btn-reset" onclick="fullReset()">⚠️ FULL RESET SYSTEM</button>
+    <input type="datetime-local" id="adminDateTime">
+    <select id="editId">
+      <script>for(let i=1;i<=8;i++) document.write(`<option value="${i}">Member ${i}</option>`);</script>
+    </select>
+    <input type="text" id="editName" placeholder="Update Name">
+    <input type="file" id="editImgFile" accept="image/*">
+    <button class="btn-action" onclick="pushUpdates()">💾 SAVE EVERYTHING</button>
   </div>
 </div>
 
@@ -99,29 +115,12 @@
   </div>
 </div>
 
-<div id="settingsPop" class="pop-overlay">
+<div id="infoPop" class="pop-overlay">
   <div class="pop-box">
-    <span class="close-x" onclick="closePop('settingsPop')">&times;</span>
-    <h3>Dashboard</h3>
-    <button class="btn-action btn-reset" onclick="fullReset()">⚠️ FULL RESET SYSTEM</button>
-
-    <div style="text-align: left; background:#2a2a2a; padding:10px; border-radius:10px;">
-      <h4 style="margin:0 0 10px 0; color:#e63946;">1. Set Timer</h4>
-      <input type="datetime-local" id="adminDateTime" step="1">
-    </div>
-
-    <div style="text-align: left; background:#2a2a2a; padding:10px; border-radius:10px; margin-top:10px;">
-      <h4 style="margin:0 0 10px 0; color:#e63946;">2. Update Member</h4>
-      <select id="editId">
-        <script>for(let i=1;i<=8;i++) document.write(`<option value="${i}">Member ${i}</option>`);</script>
-      </select>
-      <input type="text" id="editName" placeholder="New Name">
-      <label style="font-size:12px;">Upload Image:</label>
-      <input type="file" id="editImgFile" accept="image/*">
-      <p id="uploadStatus" class="loading-text">Uploading Image... Please Wait.</p>
-    </div>
-
-    <button class="btn-action" onclick="pushUpdates()">💾 SAVE EVERYTHING</button>
+    <span class="close-x" onclick="closePop('infoPop')">&times;</span>
+    <h3>ℹ️ Information</h3>
+    <p>Reset seiyappattal thirumba vote podalam. Timer mudindhavudan Winner thirayil varum.</p>
+    <button class="btn-action" onclick="closePop('infoPop')">OK</button>
   </div>
 </div>
 
@@ -141,171 +140,110 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 const storage = firebase.storage();
 
-let localNames = {};
+let localData = {}; 
+let winnerShown = false;
 
-/* 🔹 DATA SYNC - Updates names and images */
+// SYNC DATA
 db.ref("pollData").on("value", snap => {
   const data = snap.val() || {};
   for(let i=1; i<=8; i++) {
     const m = data["m"+i] || { name: "Empty", img: "" };
     document.getElementById("n"+i).innerText = m.name;
     document.getElementById("img"+i).src = m.img || "https://via.placeholder.com/150";
-    localNames[i] = m.name;
+    localData[i] = m;
   }
 });
 
-/* 🔹 TIMER LOGIC */
+// TIMER & WINNER TRIGGER
 setInterval(() => {
   db.ref("settings/endTime").once("value", snap => {
     const end = snap.val();
     if(!end || end == 0) { 
       document.getElementById("timer").innerText = "⏳ Waiting for Start"; 
+      winnerShown = false; 
       return; 
     }
     const diff = end - Date.now();
     if(diff <= 0) { 
-      document.getElementById("timer").innerText = "⏰ Voting Closed"; 
+      document.getElementById("timer").innerText = "⏰ Voting Closed";
+      if(!winnerShown) { showWinner(); winnerShown = true; }
     } else {
-      const d = Math.floor(diff/(1000*60*60*24)), 
-            h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), 
-            m = Math.floor((diff%(1000*60))/(1000*60)), 
-            s = Math.floor((diff%(1000*60))/1000);
+      winnerShown = false;
+      const d = Math.floor(diff/(1000*60*60*24)), h = Math.floor((diff%(1000*60*60*24))/(1000*60*60)), m = Math.floor((diff%(1000*60))/(1000*60)), s = Math.floor((diff%(1000*60))/1000);
       document.getElementById("timer").innerText = `⏳ ${d}d ${h}h ${m}m ${s}s`;
     }
   });
 }, 1000);
 
-/* 🔹 ADMIN LOGIN */
-function checkAdmin() {
-  if(document.getElementById("adminUser").value==="admin" && document.getElementById("adminPass").value==="1234") {
-    closePop('loginPop'); openPop('settingsPop');
-  } else { alert("Access Denied"); }
-}
-
-/* 🔹 PUSH UPDATES (Timer & Member Data) */
-async function pushUpdates() {
-  const id = document.getElementById("editId").value;
-  const name = document.getElementById("editName").value;
-  const file = document.getElementById("editImgFile").files[0];
-  const dateTime = document.getElementById("adminDateTime").value;
-
-  // 1. Update Timer
-  if(dateTime) {
-    db.ref("settings").update({ endTime: new Date(dateTime).getTime() });
-  }
-
-  // 2. Update Name
-  if(name) {
-    db.ref("pollData/m"+id).update({ name: name });
-  }
-
-  // 3. Update Image
-  if(file) {
-    document.getElementById("uploadStatus").style.display = "block";
-    try {
-      const ref = storage.ref(`images/member${id}_${Date.now()}`);
-      await ref.put(file);
-      const url = await ref.getDownloadURL();
-      db.ref("pollData/m"+id).update({ img: url });
-    } catch(e) { alert("Upload Failed: " + e.message); }
-    document.getElementById("uploadStatus").style.display = "none";
-  }
-  alert("Settings Saved!");
-}
-
-/* 🔹 FULL RESET (The key fix for your issue) */
-function fullReset() {
-  if(!confirm("Are you sure? This clears all votes and lets everyone vote again.")) return;
-  
-  // Clear the vote counts
-  db.ref("votes").remove();
-  
-  // Set a new resetToken (Session ID) and stop the timer
-  db.ref("settings").update({ 
-    endTime: 0, 
-    resetToken: Date.now() 
+function showWinner() {
+  db.ref("votes").once("value", snap => {
+    const votes = snap.val() || {};
+    let maxVotes = -1, winnerId = 1;
+    for(let i=1; i<=8; i++) {
+      let v = votes["option"+i] || 0;
+      if(v > maxVotes) { maxVotes = v; winnerId = i; }
+    }
+    if(maxVotes <= 0 && localData[winnerId].name === "Empty") return; 
+    
+    document.getElementById("winnerNameDisplay").innerText = localData[winnerId].name;
+    document.getElementById("winnerImg").src = localData[winnerId].img || "";
+    document.getElementById("winnerVotesDisplay").innerText = maxVotes + " Total Votes";
+    openPop('winnerPop');
   });
-  
-  alert("System Fully Reset! You can now start a new poll.");
 }
 
-/* 🔹 VOTING LOGIC with Reset Token Check */
 function vote(n) {
   db.ref("settings").once("value").then(snap => {
-    const settings = snap.val() || {};
-    const endTime = settings.endTime;
-    const serverResetToken = settings.resetToken || 0;
-    const localResetToken = localStorage.getItem("myResetToken") || 0;
+    const s = snap.val() || {};
+    if(!s.endTime || Date.now() > s.endTime) return alert("Poll Closed");
+    if(localStorage.getItem("voted") === "yes" && localStorage.getItem("token") == s.resetToken) return alert("Already Voted");
 
-    // 1. Check if Poll is running
-    if(!endTime || Date.now() > endTime) { 
-      alert("Voting is currently closed."); 
-      return; 
-    }
-
-    // 2. Check if user already voted IN THIS SESSION
-    if(localStorage.getItem("voted") === "yes" && localResetToken == serverResetToken) { 
-      alert("You have already voted in this poll!"); 
-      return; 
-    }
-
-    // 3. Record Vote
     db.ref("votes/option"+n).transaction(v => (v||0)+1);
-    
-    // 4. Save session info to browser
     localStorage.setItem("voted", "yes");
-    localStorage.setItem("myResetToken", serverResetToken);
-    
-    alert("Vote Registered for " + localNames[n] + "!");
+    localStorage.setItem("token", s.resetToken);
+    alert("Voted!");
   });
 }
 
-/* 🔹 LIVE RESULTS SYNC */
+async function pushUpdates() {
+  const id = document.getElementById("editId").value, name = document.getElementById("editName").value, file = document.getElementById("editImgFile").files[0], dt = document.getElementById("adminDateTime").value;
+  if(dt) db.ref("settings").update({ endTime: new Date(dt).getTime() });
+  if(name) db.ref("pollData/m"+id).update({ name: name });
+  if(file) {
+    const ref = storage.ref(`images/${id}_${Date.now()}`);
+    await ref.put(file);
+    const url = await ref.getDownloadURL();
+    db.ref("pollData/m"+id).update({ img: url });
+  }
+  alert("Saved!");
+}
+
+function fullReset() {
+  if(!confirm("Reset?")) return;
+  db.ref("votes").remove();
+  db.ref("settings").update({ endTime: 0, resetToken: Date.now() });
+  winnerShown = false;
+  alert("Reset Complete!");
+}
+
 db.ref("votes").on("value", snap => {
   const data = snap.val() || {};
   let total = 0, arr = [];
-  
-  for(let i=1; i<=8; i++) { 
-    let v = data["option"+i] || 0; 
-    total += v; 
-    arr.push({id:i, votes:v}); 
-  }
-
-  // Sort by highest votes
+  for(let i=1; i<=8; i++) { let v = data["option"+i] || 0; total += v; arr.push({id:i, votes:v}); }
   arr.sort((a,b) => b.votes - a.votes);
-  
   let html = "";
   arr.forEach((o, i) => {
     let p = total ? ((o.votes/total)*100).toFixed(1) : 0;
-    // Update main grid progress bars
     if(document.getElementById("p"+o.id)) document.getElementById("p"+o.id).style.width = p + "%";
-    // Build footer ranking list
-    html += `
-      <div class="footer-row">
-        <div class="footer-name">
-          <span>${i+1}. ${localNames[o.id] || "Unknown"}</span>
-          <span>${p}% (${o.votes})</span>
-        </div>
-        <div class="footer-progress"><span style="width:${p}%"></span></div>
-      </div>`;
+    html += `<div class="footer-row"><b>${i+1}. ${localData[o.id]?.name || "Empty"}</b> (${p}%)<div class="footer-progress"><span style="width:${p}%"></span></div></div>`;
   });
   document.getElementById("footerResults").innerHTML = html;
 });
 
-/* 🔹 UI HELPERS */
 function openPop(id) { document.getElementById(id).style.display = "flex"; }
 function closePop(id) { document.getElementById(id).style.display = "none"; }
-function toggleMenu() { 
-  const m = document.getElementById("dropdownMenu"); 
-  m.style.display = (m.style.display==="block") ? "none" : "block"; 
-}
-
-// Close menu if clicked outside
-window.onclick = function(event) {
-  if (!event.target.matches('.dots-btn')) {
-    document.getElementById("dropdownMenu").style.display = "none";
-  }
-}
+function checkAdmin() { if(document.getElementById("adminUser").value==="admin" && document.getElementById("adminPass").value==="1234") { closePop('loginPop'); openPop('settingsPop'); } else alert("Wrong"); }
+function toggleMenu() { const m = document.getElementById("dropdownMenu"); m.style.display = (m.style.display==="block")?"none":"block"; }
 </script>
 </body>
 </html>
